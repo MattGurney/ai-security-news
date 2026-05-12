@@ -1,3 +1,4 @@
+import { SecurityFilterAgent } from "./agents/securityFilterAgent.js";
 import { HackerNewsClient } from "./hn/hackerNewsClient.js";
 
 const DEFAULT_STORY_LIMIT = 10;
@@ -5,14 +6,26 @@ const DEFAULT_STORY_LIMIT = 10;
 async function main(): Promise<void> {
   const storyLimit = parseStoryLimit(process.argv[2]);
   const client = new HackerNewsClient();
+  const securityFilter = new SecurityFilterAgent();
   const stories = await client.fetchTopStories(storyLimit);
+  const candidates = securityFilter.findCandidates(stories);
 
-  console.log(`Fetched ${stories.length} Hacker News stories\n`);
+  console.log(`Fetched ${stories.length} Hacker News stories`);
+  console.log(`Found ${candidates.length} security-relevant candidates\n`);
 
-  for (const story of stories) {
-    console.log(`${story.title}`);
-    console.log(`  ${story.url}`);
-    console.log(`  score=${story.score} author=${story.author} comments=${story.commentsUrl}`);
+  if (candidates.length === 0) {
+    console.log("No security-relevant stories found in this batch.");
+    return;
+  }
+
+  for (const candidate of candidates) {
+    const { item } = candidate;
+
+    console.log(`${item.title}`);
+    console.log(`  ${item.url}`);
+    console.log(`  hnScore=${item.score} author=${item.author} comments=${item.commentsUrl}`);
+    console.log(`  relevance=${candidate.relevanceScore} signals=${candidate.matchedSignals.join(", ")}`);
+    console.log(`  reason=${candidate.reason}`);
   }
 }
 

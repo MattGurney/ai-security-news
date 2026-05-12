@@ -8,3 +8,10 @@ export interface NewsItem {
   commentsUrl: string;
   publishedAt: Date;
 }
+
+export interface SecurityCandidate {
+  item: NewsItem;
+  relevanceScore: number;
+  matchedSignals: string[];
+  reason: string;
+}
