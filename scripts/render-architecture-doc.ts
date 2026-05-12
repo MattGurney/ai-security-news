@@ -139,6 +139,9 @@ const architectureHtml = String.raw`<!doctype html>
         The system proactively scans Hacker News for stories that may matter to
         security and engineering teams. It favours recall early in the pipeline,
         then uses analysis stages to turn raw news into concise intelligence.
+        The goal is not just to label stories as security-related; it is to
+        explain why they matter, who should care, and how urgently they should be
+        treated.
       </p>
 
       <h2>Current LangGraph Flow</h2>
@@ -150,6 +153,20 @@ const architectureHtml = String.raw`<!doctype html>
       <div class="diagram">
         <pre class="mermaid">${renderNewsWorkflowMermaid()}</pre>
       </div>
+
+      <h2>What the System Produces</h2>
+      <p>
+        The final output is an <code>IntelligenceItem</code>. It answers the
+        practical questions a security-aware reader would ask after seeing a
+        noisy news feed item:
+      </p>
+      <ul>
+        <li><strong>What happened?</strong> A short summary of the story.</li>
+        <li><strong>Why is it security-relevant?</strong> The analyst's security angle.</li>
+        <li><strong>Who should care?</strong> The affected audience, such as appsec, platform, dependency-management, or engineering teams.</li>
+        <li><strong>How urgent is it?</strong> An alert level and confidence score.</li>
+        <li><strong>Why did the pipeline pick it up?</strong> Matched deterministic signals and classifier routing decisions.</li>
+      </ul>
 
       <h2>Data Objects</h2>
       <div class="grid">
@@ -243,6 +260,18 @@ const architectureHtml = String.raw`<!doctype html>
         sources, promoting monitored candidates when related stories accumulate,
         and adding a notification channel for high-severity intelligence.
       </p>
+      <p>
+        A strong next step is retrieval-augmented analysis. The system could
+        embed previously seen stories, article bodies, and emitted intelligence
+        items, then retrieve related incidents before the strong analyst runs.
+        Those related stories would give the final agent context about whether a
+        new item is part of a broader campaign, a repeated vulnerability pattern,
+        a supply-chain trend, or a follow-up to an earlier incident.
+      </p>
+      <pre><code>new SecurityCandidate
+  -> retrieve related stories from vector index / SQLite metadata
+  -> pass candidate + related context to StrongAnalystAgent
+  -> produce trend-aware IntelligenceItem</code></pre>
 
       <h2>Limitations</h2>
       <ul>
