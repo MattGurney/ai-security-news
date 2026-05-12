@@ -15,8 +15,13 @@ describe("SecurityFilterAgent", () => {
     ]);
 
     expect(candidates).toHaveLength(1);
-    expect(candidates[0]?.matchedSignals).toEqual(["supply chain", "compromise"]);
-    expect(candidates[0]?.relevanceScore).toBe(10);
+    expect(candidates[0]?.matchedSignals).toEqual([
+      "supply chain",
+      "compromise",
+      "incident",
+      "package ecosystem"
+    ]);
+    expect(candidates[0]?.relevanceScore).toBe(16);
   });
 
   it("finds AI security stories", () => {
@@ -32,6 +37,21 @@ describe("SecurityFilterAgent", () => {
     expect(candidates).toHaveLength(1);
     expect(candidates[0]?.matchedSignals).toContain("prompt injection");
     expect(candidates[0]?.matchedSignals).toContain("AI security");
+  });
+
+  it("keeps AI platform stories as candidates for LLM review", () => {
+    const agent = new SecurityFilterAgent();
+
+    const candidates = agent.findCandidates([
+      createNewsItem({
+        id: 6,
+        title: "OpenAI agents add browser sandbox support"
+      })
+    ]);
+
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0]?.matchedSignals).toContain("AI system");
+    expect(candidates[0]?.matchedSignals).toContain("agentic system");
   });
 
   it("filters out unrelated stories", () => {

@@ -30,11 +30,17 @@ and defaults to `gpt-5.5`.
 ```sh
 npm run dev
 npm run dev -- 5
+npm run docs:architecture
 npm run lint
 npm run test
 npm run build
 npm run check
 ```
+
+## Architecture
+
+The AI and data-flow design is documented in `docs/architecture.html`. Regenerate
+it with `npm run docs:architecture` after graph or data-object changes.
 
 ## Progress
 

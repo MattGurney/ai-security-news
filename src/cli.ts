@@ -2,11 +2,19 @@ import type { IntelligenceItem } from "./types.js";
 import { runNewsWorkflow } from "./workflow/newsGraph.js";
 
 const DEFAULT_STORY_LIMIT = 10;
+const MAX_STORY_LIMIT = 500;
 
 /** Runs the command-line workflow for a single Hacker News polling pass. */
 export async function runCli(args: string[]): Promise<void> {
   const storyLimit = parseStoryLimit(args[2]);
-  const { stories, candidates, intelligenceItems } = await runNewsWorkflow(storyLimit);
+
+  console.log(`Starting AI security news scan for ${storyLimit} Hacker News stories...`);
+
+  const { stories, candidates, intelligenceItems } = await runNewsWorkflow(storyLimit, {
+    onProgress: (message) => {
+      console.log(message);
+    }
+  });
 
   console.log(`Fetched ${stories.length} Hacker News stories`);
   console.log(`Found ${candidates.length} security-relevant candidates\n`);
@@ -33,7 +41,7 @@ export function parseStoryLimit(value: string | undefined): number {
     return DEFAULT_STORY_LIMIT;
   }
 
-  return Math.min(parsed, 50);
+  return Math.min(parsed, MAX_STORY_LIMIT);
 }
 
 function formatIntelligenceItem(intelligenceItem: IntelligenceItem): string {

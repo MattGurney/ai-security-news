@@ -10,18 +10,24 @@ const SECURITY_SIGNALS: SecuritySignal[] = [
   { label: "supply chain", pattern: /\bsupply[- ]chain\b/i, weight: 5 },
   { label: "compromise", pattern: /\bcompromised?\b|\bcompromise\b/i, weight: 5 },
   { label: "vulnerability", pattern: /\bvulnerabilit(?:y|ies)\b|\bcve-\d{4}-\d+\b/i, weight: 5 },
-  { label: "exploit", pattern: /\bexploit(?:ed|s|ing)?\b/i, weight: 4 },
-  { label: "breach", pattern: /\bbreach(?:ed|es)?\b|\bleak(?:ed|s)?\b/i, weight: 4 },
-  { label: "malware", pattern: /\bmalware\b|\bransomware\b|\bspyware\b/i, weight: 4 },
-  { label: "authentication", pattern: /\bauth(?:entication|orization)?\b|\boauth\b|\bsso\b/i, weight: 3 },
-  { label: "cryptography", pattern: /\bcrypto(?:graphy|graphic)?\b|\bencryption\b|\btls\b|\bssl\b/i, weight: 3 },
+  { label: "zero day", pattern: /\bzero[- ]day\b|\b0day\b/i, weight: 5 },
+  { label: "exploit", pattern: /\bexploit(?:ed|s|ing)?\b/i, weight: 5 },
+  { label: "breach", pattern: /\bbreach(?:ed|es)?\b|\bleaked data\b|\bdata leak\b/i, weight: 5 },
+  { label: "incident", pattern: /\bincident\b|\bpostmortem\b|\boutage\b/i, weight: 3 },
+  { label: "malware", pattern: /\bmalware\b|\bransomware\b|\bspyware\b/i, weight: 5 },
+  { label: "package ecosystem", pattern: /\bnpm\b|\bpypi\b|\bdependency\b|\bdependencies\b/i, weight: 3 },
+  { label: "authentication", pattern: /\bauth(?:entication|orization)?\b|\boauth\b|\bsso\b/i, weight: 4 },
+  { label: "cryptography", pattern: /\bcrypto(?:graphy|graphic)?\b|\bencryption\b|\btls\b|\bssl\b/i, weight: 4 },
   { label: "prompt injection", pattern: /\bprompt injection\b|\bjailbreak(?:ing)?\b/i, weight: 5 },
-  { label: "AI security", pattern: /\bAI safety\b|\bLLM security\b|\bmodel security\b/i, weight: 4 },
+  { label: "AI security", pattern: /\bAI safety\b|\bLLM security\b|\bmodel security\b|\bAI security\b/i, weight: 5 },
+  { label: "AI system", pattern: /\bAI\b|\bLLM\b|\bGPT\b|\bOpenAI\b|\bAnthropic\b|\bClaude\b|\bChatGPT\b/i, weight: 3 },
+  { label: "agentic system", pattern: /\bagent(?:ic|s)?\b|\btool calling\b|\bMCP\b|\bsandbox\b/i, weight: 2 },
   { label: "security", pattern: /\bsecurity\b|\binfosec\b|\bcyber(?:security)?\b/i, weight: 3 },
-  { label: "privacy", pattern: /\bprivacy\b|\bsurveillance\b|\btracking\b/i, weight: 2 }
+  { label: "privacy", pattern: /\bprivacy\b|\bsurveillance\b|\btracking\b/i, weight: 2 },
+  { label: "data exposure", pattern: /\bdata exposure\b|\bdata leak\b|\bsecret(?:s)?\b|\bapi token(?:s)?\b|\bcredential(?:s)?\b/i, weight: 5 }
 ];
 
-const MINIMUM_RELEVANCE_SCORE = 3;
+const MINIMUM_RELEVANCE_SCORE = 5;
 
 /** Selects likely security stories using deterministic keyword signals. */
 export class SecurityFilterAgent {

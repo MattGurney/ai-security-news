@@ -29,18 +29,24 @@ describe("newsGraph", () => {
     const fetchTopStories = vi.fn(async () => [story]);
     const findCandidates = vi.fn(() => [candidate]);
     const analyzeCandidates = vi.fn(async () => [intelligenceItem]);
+    const onProgress = vi.fn();
     const onPublish = vi.fn();
 
     const result = await runNewsWorkflow(5, {
       hackerNewsClient: { fetchTopStories },
       securityFilterAgent: { findCandidates },
       analystAgent: { analyzeCandidates },
+      onProgress,
       onPublish
     });
 
     expect(fetchTopStories).toHaveBeenCalledWith(5);
     expect(findCandidates).toHaveBeenCalledWith([story]);
     expect(analyzeCandidates).toHaveBeenCalledWith([candidate]);
+    expect(onProgress).toHaveBeenCalledWith("Fetching 5 Hacker News stories...");
+    expect(onProgress).toHaveBeenCalledWith("Filtering 1 stories for security signals...");
+    expect(onProgress).toHaveBeenCalledWith("Analyzing 1 security candidates...");
+    expect(onProgress).toHaveBeenCalledWith("Publishing intelligence items...");
     expect(onPublish).toHaveBeenCalledWith({
       storyLimit: 5,
       stories: [story],
