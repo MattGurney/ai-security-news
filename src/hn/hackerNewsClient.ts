@@ -18,6 +18,7 @@ export interface HackerNewsClientOptions {
   baseUrl?: string;
 }
 
+/** Fetches and normalizes stories from the Hacker News Firebase API. */
 export class HackerNewsClient {
   private readonly fetchImpl: typeof fetch;
   private readonly baseUrl: string;
@@ -27,6 +28,7 @@ export class HackerNewsClient {
     this.baseUrl = options.baseUrl ?? HN_BASE_URL;
   }
 
+  /** Fetches top story identifiers from Hacker News. */
   async fetchTopStoryIds(limit: number): Promise<number[]> {
     const response = await this.fetchImpl(`${this.baseUrl}/topstories.json`);
 
@@ -45,6 +47,7 @@ export class HackerNewsClient {
       .slice(0, limit);
   }
 
+  /** Fetches one Hacker News item and returns it when it is a valid story. */
   async fetchStory(id: number): Promise<NewsItem | null> {
     const response = await this.fetchImpl(`${this.baseUrl}/item/${id}.json`);
 
@@ -56,6 +59,7 @@ export class HackerNewsClient {
     return normalizeHackerNewsStory(payload);
   }
 
+  /** Fetches and normalizes a batch of top Hacker News stories. */
   async fetchTopStories(limit = 10): Promise<NewsItem[]> {
     const ids = await this.fetchTopStoryIds(limit);
     const stories = await Promise.all(ids.map((id) => this.fetchStory(id)));
@@ -64,6 +68,7 @@ export class HackerNewsClient {
   }
 }
 
+/** Converts raw Hacker News item JSON into the internal news item shape. */
 export function normalizeHackerNewsStory(payload: unknown): NewsItem | null {
   if (!isHackerNewsStory(payload) || payload.type !== "story") {
     return null;

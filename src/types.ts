@@ -1,3 +1,4 @@
+/** A normalized news story from an external source. */
 export interface NewsItem {
   id: number;
   title: string;
@@ -9,9 +10,28 @@ export interface NewsItem {
   publishedAt: Date;
 }
 
+/** A story selected by the deterministic first-pass security filter. */
 export interface SecurityCandidate {
   item: NewsItem;
   relevanceScore: number;
   matchedSignals: string[];
   reason: string;
+}
+
+export type AlertLevel = "low" | "medium" | "high" | "critical";
+
+/** Model-generated or fallback assessment of a security candidate. */
+export interface SecurityAnalysis {
+  summary: string;
+  securityAngle: string;
+  affectedAudience: string;
+  alertLevel: AlertLevel;
+  confidence: number;
+}
+
+/** The final intelligence object emitted by the workflow. */
+export interface IntelligenceItem {
+  candidate: SecurityCandidate;
+  analysis: SecurityAnalysis;
+  analyzedBy: "llm" | "fallback";
 }

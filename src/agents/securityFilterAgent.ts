@@ -23,7 +23,9 @@ const SECURITY_SIGNALS: SecuritySignal[] = [
 
 const MINIMUM_RELEVANCE_SCORE = 3;
 
+/** Selects likely security stories using deterministic keyword signals. */
 export class SecurityFilterAgent {
+  /** Returns security candidates sorted by strongest relevance score first. */
   findCandidates(items: NewsItem[]): SecurityCandidate[] {
     return items
       .map((item) => this.scoreItem(item))
