@@ -8,6 +8,10 @@ import type { ClassifiedCandidate, IntelligenceItem, NewsItem, SecurityCandidate
 
 const NewsGraphState = Annotation.Root({
   storyLimit: Annotation<number>(),
+  inputStories: Annotation<NewsItem[]>({
+    reducer: (_current, update) => update,
+    default: () => []
+  }),
   stories: Annotation<NewsItem[]>({
     reducer: (_current, update) => update,
     default: () => []
@@ -104,6 +108,14 @@ function createNewsWorkflowNodes(dependencies: NewsWorkflowDependencies) {
 
   return {
     fetchStories: async (state: NewsGraphStateType) => {
+      if (state.inputStories.length > 0) {
+        dependencies.onProgress?.(`Processing ${state.inputStories.length} pre-fetched Hacker News stories...`);
+
+        return {
+          stories: state.inputStories
+        };
+      }
+
       dependencies.onProgress?.(`Fetching ${state.storyLimit} Hacker News stories...`);
 
       return {
@@ -159,6 +171,19 @@ export async function runNewsWorkflow(
   const workflow = createNewsWorkflow(dependencies);
 
   return workflow.invoke({ storyLimit });
+}
+
+/** Runs the intelligence graph over stories that were already fetched by a monitor. */
+export async function runNewsWorkflowForStories(
+  stories: NewsItem[],
+  dependencies: NewsWorkflowDependencies = {}
+): Promise<NewsGraphStateType> {
+  const workflow = createNewsWorkflow(dependencies);
+
+  return workflow.invoke({
+    storyLimit: stories.length,
+    inputStories: stories
+  });
 }
 
 /** Renders the workflow topology as Mermaid markup for architecture documentation. */

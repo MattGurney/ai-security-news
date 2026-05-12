@@ -130,7 +130,8 @@ const architectureHtml = String.raw`<!doctype html>
       <p class="lede">
         This document describes the system from an AI and data-flow perspective:
         how Hacker News items become security candidates, how agents cooperate,
-        and where deterministic filtering hands off to classifier and analyst agents.
+        where deterministic filtering hands off to classifier and analyst agents,
+        and how proactive monitor state avoids reprocessing old stories.
       </p>
 
       <h2>Objective</h2>
@@ -168,6 +169,21 @@ const architectureHtml = String.raw`<!doctype html>
           level, confidence, audience, and security angle.</p>
         </section>
       </div>
+
+      <h2>Proactive Runtime</h2>
+      <p>
+        The CLI monitor mode wraps the LangGraph workflow with local state. It
+        polls Hacker News on an interval, records seen story IDs in SQLite,
+        sends only new stories into the AI pipeline, persists emitted
+        intelligence, and appends JSONL records for simple inspection.
+      </p>
+      <pre><code>monitor loop
+  -> fetch Hacker News stories
+  -> exclude IDs already in data/news-monitor.sqlite
+  -> run LangGraph over new stories only
+  -> persist seen stories and intelligence rows
+  -> append output/intelligence.jsonl
+  -> sleep and repeat</code></pre>
 
       <h2>Agent Roles</h2>
       <ul>
@@ -223,9 +239,9 @@ const architectureHtml = String.raw`<!doctype html>
 
       <h2>Planned Evolution</h2>
       <p>
-        The next required architecture step is proactive operation: a monitor mode
-        that polls Hacker News on an interval, deduplicates story IDs across runs,
-        and emits only new intelligence.
+        Future improvements include fetching article body text, adding more news
+        sources, promoting monitored candidates when related stories accumulate,
+        and adding a notification channel for high-severity intelligence.
       </p>
 
       <h2>Limitations</h2>
@@ -233,7 +249,7 @@ const architectureHtml = String.raw`<!doctype html>
         <li>The system currently uses only Hacker News top stories.</li>
         <li>The deterministic filter sees only title and URL, not article body text.</li>
         <li>The CLI is the only publishing surface.</li>
-        <li>There is no persistence or deduplication yet, so each run is independent.</li>
+        <li>Persistence is local-only and intended for demo/runtime state, not multi-user operation.</li>
       </ul>
     </main>
   </body>

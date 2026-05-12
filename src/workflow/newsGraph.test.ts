@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { runNewsWorkflow } from "./newsGraph.js";
+import { runNewsWorkflow, runNewsWorkflowForStories } from "./newsGraph.js";
 import type { ClassifiedCandidate, IntelligenceItem, NewsItem, SecurityCandidate } from "../types.js";
 
 describe("newsGraph", () => {
@@ -59,6 +59,7 @@ describe("newsGraph", () => {
     expect(onProgress).toHaveBeenCalledWith("Publishing intelligence items...");
     expect(onPublish).toHaveBeenCalledWith({
       storyLimit: 5,
+      inputStories: [],
       stories: [story],
       candidates: [candidate],
       classifiedCandidates: [classifiedCandidate],
@@ -97,6 +98,29 @@ describe("newsGraph", () => {
     expect(result.monitoredCandidates).toEqual([classifiedCandidate]);
     expect(result.intelligenceItems).toEqual([]);
   });
+
+  it("can process pre-fetched stories without calling the Hacker News client", async () => {
+    const story = createNewsItem({ id: 3, title: "Prefetched vulnerability" });
+    const fetchTopStories = vi.fn(async () => []);
+
+    const result = await runNewsWorkflowForStories([story], {
+      hackerNewsClient: { fetchTopStories },
+      securityFilterAgent: { findCandidates: (stories) => [createCandidate(stories[0] ?? story)] },
+      classifierAgent: {
+        classifyCandidates: async (candidates) =>
+          candidates.map((candidate) => ({
+            candidate,
+            decision: "monitor",
+            rationale: "Prefetched monitor test.",
+            confidence: 0.8
+          }))
+      }
+    });
+
+    expect(fetchTopStories).not.toHaveBeenCalled();
+    expect(result.stories).toEqual([story]);
+    expect(result.monitoredCandidates).toHaveLength(1);
+  });
 });
 
 function createNewsItem(overrides: Partial<NewsItem>): NewsItem {
@@ -110,5 +134,14 @@ function createNewsItem(overrides: Partial<NewsItem>): NewsItem {
     commentsUrl: "https://news.ycombinator.com/item?id=1",
     publishedAt: new Date("2026-01-01T00:00:00.000Z"),
     ...overrides
+  };
+}
+
+function createCandidate(story: NewsItem): SecurityCandidate {
+  return {
+    item: story,
+    relevanceScore: 5,
+    matchedSignals: ["vulnerability"],
+    reason: "Matched vulnerability"
   };
 }

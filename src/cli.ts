@@ -1,11 +1,20 @@
 import type { ClassifiedCandidate, IntelligenceItem } from "./types.js";
+import { MonitorService } from "./monitor/monitorService.js";
 import { runNewsWorkflow } from "./workflow/newsGraph.js";
 
 const DEFAULT_STORY_LIMIT = 10;
 const MAX_STORY_LIMIT = 500;
+const DEFAULT_MONITOR_INTERVAL_SECONDS = 300;
+const DEFAULT_DB_PATH = "data/news-monitor.sqlite";
+const DEFAULT_JSONL_PATH = "output/intelligence.jsonl";
 
 /** Runs the command-line workflow for a single Hacker News polling pass. */
 export async function runCli(args: string[]): Promise<void> {
+  if (args[2] === "monitor") {
+    await runMonitorCli(args.slice(3));
+    return;
+  }
+
   const storyLimit = parseStoryLimit(args[2]);
 
   console.log(`Starting AI security news scan for ${storyLimit} Hacker News stories...`);
@@ -48,6 +57,27 @@ export async function runCli(args: string[]): Promise<void> {
   }
 }
 
+/** Runs the proactive monitor loop until interrupted, or once when --once is passed. */
+export async function runMonitorCli(args: string[]): Promise<void> {
+  const options = parseMonitorOptions(args);
+  const monitor = new MonitorService();
+
+  console.log(
+    `Starting proactive monitor: limit=${options.storyLimit} interval=${options.intervalSeconds}s db=${options.dbPath} jsonl=${options.jsonlPath}`
+  );
+
+  if (options.once) {
+    console.log("Running one polling cycle because --once was provided.");
+  }
+
+  await monitor.run({
+    ...options,
+    onProgress: (message) => {
+      console.log(message);
+    }
+  });
+}
+
 /** Parses the optional story limit argument and caps it to a small demo-friendly batch. */
 export function parseStoryLimit(value: string | undefined): number {
   if (value === undefined) {
@@ -61,6 +91,22 @@ export function parseStoryLimit(value: string | undefined): number {
   }
 
   return Math.min(parsed, MAX_STORY_LIMIT);
+}
+
+export function parseMonitorOptions(args: string[]): {
+  storyLimit: number;
+  intervalSeconds: number;
+  once: boolean;
+  dbPath: string;
+  jsonlPath: string;
+} {
+  return {
+    storyLimit: parseStoryLimit(getFlagValue(args, "--limit")),
+    intervalSeconds: parsePositiveInteger(getFlagValue(args, "--interval-seconds"), DEFAULT_MONITOR_INTERVAL_SECONDS),
+    once: args.includes("--once"),
+    dbPath: getFlagValue(args, "--db") ?? DEFAULT_DB_PATH,
+    jsonlPath: getFlagValue(args, "--jsonl") ?? DEFAULT_JSONL_PATH
+  };
 }
 
 function formatIntelligenceItem(intelligenceItem: IntelligenceItem): string {
@@ -88,4 +134,28 @@ function formatClassifiedCandidate(classifiedCandidate: ClassifiedCandidate): st
     `  rationale=${classifiedCandidate.rationale}`,
     `  ${candidate.item.url}`
   ].join("\n");
+}
+
+function getFlagValue(args: string[], flag: string): string | undefined {
+  const index = args.indexOf(flag);
+
+  if (index === -1) {
+    return undefined;
+  }
+
+  return args[index + 1];
+}
+
+function parsePositiveInteger(value: string | undefined, fallback: number): number {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    return fallback;
+  }
+
+  return parsed;
 }

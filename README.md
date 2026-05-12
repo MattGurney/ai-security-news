@@ -33,6 +33,8 @@ Set `OPENAI_API_KEY` in `.env` to enable LLM classification and analysis.
 ```sh
 npm run dev
 npm run dev -- 5
+npm run monitor
+npm run monitor -- --once --limit 500
 npm run docs:architecture
 npm run lint
 npm run test
@@ -44,6 +46,23 @@ npm run check
 
 The AI and data-flow design is documented in `docs/architecture.html`. Regenerate
 it with `npm run docs:architecture` after graph or data-object changes.
+
+## Proactive Monitor
+
+Run a continuous polling loop with local SQLite state and JSONL output:
+
+```sh
+npm run monitor
+```
+
+For a single test cycle:
+
+```sh
+npm run monitor -- --once --limit 500 --interval-seconds 300
+```
+
+The monitor stores dedupe state in `data/news-monitor.sqlite` and appends emitted
+intelligence items to `output/intelligence.jsonl`. Both paths are ignored by Git.
 
 ## Progress
 
@@ -63,3 +82,5 @@ it with `npm run docs:architecture` after graph or data-object changes.
   During this milestone the graph construction was corrected back to readable
   named nodes after an overly mechanical topology-array approach made the core
   workflow harder to understand.
+- Milestone 7: Added proactive monitor mode with SQLite-backed dedupe state and
+  JSONL output for locally observable intelligence events.
