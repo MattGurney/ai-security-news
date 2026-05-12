@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { runNewsWorkflow } from "./newsGraph.js";
-import type { IntelligenceItem, NewsItem, SecurityCandidate } from "../types.js";
+import type { ClassifiedCandidate, IntelligenceItem, NewsItem, SecurityCandidate } from "../types.js";
 
 describe("newsGraph", () => {
   it("fetches stories, filters candidates, and publishes the final state", async () => {
@@ -26,8 +26,15 @@ describe("newsGraph", () => {
         confidence: 0.92
       }
     };
+    const classifiedCandidate: ClassifiedCandidate = {
+      candidate,
+      decision: "analyze",
+      rationale: "Supply-chain compromise deserves deep analysis.",
+      confidence: 0.91
+    };
     const fetchTopStories = vi.fn(async () => [story]);
     const findCandidates = vi.fn(() => [candidate]);
+    const classifyCandidates = vi.fn(async () => [classifiedCandidate]);
     const analyzeCandidates = vi.fn(async () => [intelligenceItem]);
     const onProgress = vi.fn();
     const onPublish = vi.fn();
@@ -35,6 +42,7 @@ describe("newsGraph", () => {
     const result = await runNewsWorkflow(5, {
       hackerNewsClient: { fetchTopStories },
       securityFilterAgent: { findCandidates },
+      classifierAgent: { classifyCandidates },
       analystAgent: { analyzeCandidates },
       onProgress,
       onPublish
@@ -42,18 +50,52 @@ describe("newsGraph", () => {
 
     expect(fetchTopStories).toHaveBeenCalledWith(5);
     expect(findCandidates).toHaveBeenCalledWith([story]);
+    expect(classifyCandidates).toHaveBeenCalledWith([candidate]);
     expect(analyzeCandidates).toHaveBeenCalledWith([candidate]);
     expect(onProgress).toHaveBeenCalledWith("Fetching 5 Hacker News stories...");
     expect(onProgress).toHaveBeenCalledWith("Filtering 1 stories for security signals...");
-    expect(onProgress).toHaveBeenCalledWith("Analyzing 1 security candidates...");
+    expect(onProgress).toHaveBeenCalledWith("Classifying 1 candidates for routing...");
+    expect(onProgress).toHaveBeenCalledWith("Analyzing 1 routed candidates...");
     expect(onProgress).toHaveBeenCalledWith("Publishing intelligence items...");
     expect(onPublish).toHaveBeenCalledWith({
       storyLimit: 5,
       stories: [story],
       candidates: [candidate],
+      classifiedCandidates: [classifiedCandidate],
+      candidatesForAnalysis: [candidate],
+      monitoredCandidates: [],
+      ignoredCandidates: [],
       intelligenceItems: [intelligenceItem]
     });
     expect(result.intelligenceItems).toEqual([intelligenceItem]);
+  });
+
+  it("routes directly to publishing when classifier finds no analysis candidates", async () => {
+    const story = createNewsItem({ id: 2, title: "AI agent tooling" });
+    const candidate: SecurityCandidate = {
+      item: story,
+      relevanceScore: 5,
+      matchedSignals: ["AI system", "agentic system"],
+      reason: "Matched AI system, agentic system"
+    };
+    const classifiedCandidate: ClassifiedCandidate = {
+      candidate,
+      decision: "monitor",
+      rationale: "Security-adjacent but not urgent.",
+      confidence: 0.7
+    };
+    const analyzeCandidates = vi.fn(async () => []);
+
+    const result = await runNewsWorkflow(5, {
+      hackerNewsClient: { fetchTopStories: async () => [story] },
+      securityFilterAgent: { findCandidates: () => [candidate] },
+      classifierAgent: { classifyCandidates: async () => [classifiedCandidate] },
+      analystAgent: { analyzeCandidates }
+    });
+
+    expect(analyzeCandidates).not.toHaveBeenCalled();
+    expect(result.monitoredCandidates).toEqual([classifiedCandidate]);
+    expect(result.intelligenceItems).toEqual([]);
   });
 });
 

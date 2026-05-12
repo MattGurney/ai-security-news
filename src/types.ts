@@ -18,6 +18,16 @@ export interface SecurityCandidate {
   reason: string;
 }
 
+export type TriageDecision = "ignore" | "monitor" | "analyze";
+
+/** A weak-classifier decision about whether a candidate deserves deeper analysis. */
+export interface ClassifiedCandidate {
+  candidate: SecurityCandidate;
+  decision: TriageDecision;
+  rationale: string;
+  confidence: number;
+}
+
 export type AlertLevel = "low" | "medium" | "high" | "critical";
 
 /** Model-generated or fallback assessment of a security candidate. */

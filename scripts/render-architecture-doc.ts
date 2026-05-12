@@ -130,7 +130,7 @@ const architectureHtml = String.raw`<!doctype html>
       <p class="lede">
         This document describes the system from an AI and data-flow perspective:
         how Hacker News items become security candidates, how agents cooperate,
-        and where deterministic filtering hands off to model-based analysis.
+        and where deterministic filtering hands off to classifier and analyst agents.
       </p>
 
       <h2>Objective</h2>
@@ -173,7 +173,8 @@ const architectureHtml = String.raw`<!doctype html>
       <ul>
         <li><strong>Fetcher Agent:</strong> retrieves top Hacker News stories through the Firebase API.</li>
         <li><strong>Deterministic Candidate Filter:</strong> performs cheap, explainable, recall-oriented triage using security, AI, incident, package ecosystem, and vulnerability signals.</li>
-        <li><strong>Analyst Agent:</strong> uses an OpenAI model through LangChain structured output when configured, or deterministic fallback analysis when no key is available.</li>
+        <li><strong>Weak Classifier Agent:</strong> classifies candidates as <code>ignore</code>, <code>monitor</code>, or <code>analyze</code> using a lightweight prompt, with deterministic fallback routing when no key is available.</li>
+        <li><strong>Strong Analyst Agent:</strong> uses an OpenAI model through LangChain structured output for candidates routed to deep analysis, or deterministic fallback analysis when no key is available.</li>
         <li><strong>Publisher:</strong> emits observable intelligence items to the CLI for the current demo surface.</li>
       </ul>
 
@@ -181,8 +182,9 @@ const architectureHtml = String.raw`<!doctype html>
       <p>
         The first filter is intentionally not the final judge. It catches likely
         security and AI-security material with enough recall to supply downstream
-        model stages. Stronger judgement belongs in later agents, where prompts
-        can assess context, audience, risk, and whether a story deserves alerting.
+        model stages. The classifier agent then performs cheap semantic routing,
+        and the stronger analyst is reserved for candidates that deserve deeper
+        security interpretation.
       </p>
       <p>
         Current deterministic signals include:
@@ -207,18 +209,24 @@ const architectureHtml = String.raw`<!doctype html>
         <span class="tag">data exposure</span>
       </p>
 
-      <h2>Planned Evolution</h2>
+      <h2>Routing Strategy</h2>
       <p>
-        The next AI architecture step is a two-stage model path: a cheaper
-        classifier agent decides whether each deterministic candidate should be
-        ignored, monitored, or deeply analyzed. LangGraph conditional routing can
-        then send only high-value candidates to the stronger analyst agent.
+        The model path is split into triage and analysis. The weak classifier
+        makes a routing decision for each candidate, and LangGraph conditional
+        routing skips the strong analyst when no candidates need deep analysis.
       </p>
       <pre><code>SecurityCandidate
   -> WeakClassifierAgent: ignore | monitor | analyze
   -> route in LangGraph
   -> StrongAnalystAgent for analyze items
   -> Publisher</code></pre>
+
+      <h2>Planned Evolution</h2>
+      <p>
+        The next required architecture step is proactive operation: a monitor mode
+        that polls Hacker News on an interval, deduplicates story IDs across runs,
+        and emits only new intelligence.
+      </p>
 
       <h2>Limitations</h2>
       <ul>
