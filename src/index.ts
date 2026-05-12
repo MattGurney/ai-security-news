@@ -1,14 +1,10 @@
-import { SecurityFilterAgent } from "./agents/securityFilterAgent.js";
-import { HackerNewsClient } from "./hn/hackerNewsClient.js";
+import { runNewsWorkflow } from "./workflow/newsGraph.js";
 
 const DEFAULT_STORY_LIMIT = 10;
 
 async function main(): Promise<void> {
   const storyLimit = parseStoryLimit(process.argv[2]);
-  const client = new HackerNewsClient();
-  const securityFilter = new SecurityFilterAgent();
-  const stories = await client.fetchTopStories(storyLimit);
-  const candidates = securityFilter.findCandidates(stories);
+  const { stories, candidates } = await runNewsWorkflow(storyLimit);
 
   console.log(`Fetched ${stories.length} Hacker News stories`);
   console.log(`Found ${candidates.length} security-relevant candidates\n`);
