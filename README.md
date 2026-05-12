@@ -44,8 +44,9 @@ npm run check
 
 ## Architecture
 
-The AI and data-flow design is documented in `docs/architecture.html`. Regenerate
-it with `npm run docs:architecture` after graph or data-object changes.
+The design rationale, agent responsibilities, limitations, and planned next steps
+are documented in `docs/architecture.html`. Regenerate it with
+`npm run docs:architecture` after graph or data-object changes.
 
 ## Proactive Monitor
 
